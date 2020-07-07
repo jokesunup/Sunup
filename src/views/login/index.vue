@@ -11,8 +11,13 @@
                 <el-input type="text" v-model="ruleForm.username" autocomplete="off"></el-input>
             </el-form-item>
 
-            <el-form-item prop="checkPassword">
+            <el-form-item prop="Password">
                 <label class="input_lb">密码</label>
+                <el-input type="password" v-model="ruleForm.Password" autocomplete="off" maxlength="20" minlength="6"></el-input>
+            </el-form-item>
+
+            <el-form-item prop="checkPassword" v-show="isShow=='register'">
+                <label class="input_lb">重复密码</label>
                 <el-input type="password" v-model="ruleForm.checkPassword" autocomplete="off" maxlength="20" minlength="6"></el-input>
             </el-form-item>
 
@@ -32,11 +37,14 @@
     </div>
 </template>
 <script>
+import { stripscript } from "@/dataValidation/index"
 export default {
     name:'login',
     data(){
         //邮箱验证
         var validateusername = (rule, value, callback) => {
+        this.ruleForm.username = stripscript(value)
+        value = this.ruleForm.username
         var reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/
         if (value === '') {
           callback(new Error('请输入邮箱'));
@@ -47,7 +55,9 @@ export default {
         }
         };
       //密码验证
-        var validatecheckPassword = (rule, value, callback) => {
+        var validatePassword = (rule, value, callback) => {
+        this.ruleForm.Password = stripscript(value)
+        value = this.ruleForm.Password
         let reg = /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/
         if (value === '') {
           callback(new Error('请输入密码'));
@@ -57,8 +67,25 @@ export default {
           callback();
         }
         };
+      //重复密码验证
+        var validatecheckPassword = (rule, value, callback) => {
+        this.ruleForm.checkPassword = stripscript(value)
+        value = this.ruleForm.checkPassword
+        let reg = /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/
+        if (value === '') {
+          callback(new Error('请再次输入密码'));
+        }else if(value != this.ruleForm.Password){
+          callback(new Error('两次密码不一致'));
+        }else if (!reg.test(value)) {
+          callback(new Error('6-20位，数字+字母'));
+        } else {
+          callback();
+        }
+        };
       //验证码验证
         var checkcode = (rule, value, callback) => {
+        this.ruleForm.code = stripscript(value)
+        value = this.ruleForm.code
         let reg = /^[a-z0-9]{6}$/
         if (value ==='') {
           return callback(new Error('请输入验证码'));
@@ -70,17 +97,23 @@ export default {
       };
     return{
         btn:[
-            {name:'登录',current:true},
-            {name:'注册',current:false},
+            {name:'登录',current:true,type:'login'},
+            {name:'注册',current:false,type:'register'},
         ],
+        isShow:'login',
+        //验证数据
         ruleForm: {
           username: '',
+          Password:'',
           checkPassword: '',
           code: ''
         },
         rules: {
           username: [
             { validator: validateusername, trigger: 'blur' }
+          ],
+          Password:[
+             { validator: validatePassword, trigger: 'blur' }
           ],
           checkPassword: [
             { validator: validatecheckPassword, trigger: 'blur' }
@@ -94,6 +127,7 @@ export default {
 
     methods:{
         handleCurrent(data){
+          this.isShow = data.type
             this.btn.forEach((elem) => {
                 elem.current = false
             });
